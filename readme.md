@@ -24,7 +24,7 @@ git clone https://github.com/JZITNIK-github/discord-bio-changer
 
 ### 2. Go to src folder
 ```
-cd custom-bio-changer/src
+cd discord-bio-changer/src
 ```
 
 ### 3. Install required libraries
