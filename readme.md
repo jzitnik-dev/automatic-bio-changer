@@ -19,7 +19,7 @@ You can install this program to you own server.
 
 ### 1. Clone this repository
 ```
-git clone url
+git clone https://github.com/JZITNIK-github/discord-bio-changer
 ```
 
 ### 2. Go to src folder
