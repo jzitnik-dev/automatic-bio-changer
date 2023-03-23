@@ -9,5 +9,5 @@
   "token": "YOUR_TOKEN_HERE",
   "password": "some-password",
   "updatingInMinutes": 2,
-  "webserver": {"host": "0.0.0.0", "port": 1750}
+  "webserver": {"host": "0.0.0.0", "port": 80}
 }
