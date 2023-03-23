@@ -15,9 +15,9 @@ def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
 
-
+print()
 try:
-    with open(os.path.dirname(os.path.realpath(__file__))+'\config.json') as f:
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as f:
         config = json.loads(f.read())
 except FileNotFoundError:
     print("Fatal Error: File config.json was not found!")
@@ -113,10 +113,10 @@ def change():
 @app.errorhandler(404)
 def page_not_found(e):
     if (validToken == True):
-        with open(os.path.dirname(os.path.realpath(__file__))+'\pages\index.html') as f:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"pages", "index.html")) as f:
             return f.read().replace("$nowText", nowtext).replace("$lastChange", lastChange)
     else:
-        with open(os.path.dirname(os.path.realpath(__file__))+'\pages\invalidToken.html') as f:
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "pages", "invalidToken.html")) as f:
             return f.read()
 
 
@@ -184,7 +184,7 @@ if (validToken == False):
 else:
     print("Starting cli interface...")
     time.sleep(2)
-    # clearConsole()
+    clearConsole()
     while True:
         print("""Commands:
         !stop Stop a server
