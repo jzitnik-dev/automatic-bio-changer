@@ -1,0 +1,47 @@
+<h1>Text right now:</h1>
+<p>$nowText<p>
+<h1>Last change</h1>
+<p>$lastChange</p>
+<h1>Dashboard</h1>
+<button onclick="changeText()">Change text</button><br>
+<button onclick="window.location.href = '/logs'">Get logs</button><br>
+<button onclick="stopServer()">Stop server</button><br>
+
+
+<script>
+    function changeText() {
+        var pass = prompt("Enter password:");
+        if (pass != null) {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", "/changeText?password="+pass, false ); 
+            xmlHttp.send( null );
+            if (xmlHttp.responseText == "true") {
+                alert("Text was changed successfully.");
+                window.location.reload();
+            }
+            else if (xmlHttp.responseText == "wrongpass" ) {
+                alert("Wrong password");
+            }
+            else {
+                alert("Error occurred.");
+            }
+        }
+    }
+    function stopServer() {
+        var pass = prompt("Enter password:");
+        if (pass != null) {
+            var xmlHttp = new XMLHttpRequest();
+            xmlHttp.open( "GET", "/stopServer?password="+pass, false ); 
+            xmlHttp.send( null );
+            if (xmlHttp.responseText == "wrongpass" ) {
+                alert("Wrong password");
+            }
+            else if (xmlHttp.responseText == "true") {
+                alert("Server was stopped.");
+            }
+            else {
+                alert("Error occurred.");
+            }
+        }
+    }
+</script>

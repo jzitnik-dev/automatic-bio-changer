@@ -1,0 +1,30 @@
+{
+  "randomStrings": [
+    "Never spend 6 minutes doing something by hand when you can spend 6 hours failing to automate it.",
+    "Something > Nothing", "Quality > Quantity",
+    "Ask a programmer to review 10 lines of code, he'll find 10 issues. Ask him to do 500 lines and he'll say it looks good.",
+    "6 hours of debugging can safe you 5 minutes of reading documentation.",
+    "Programmer: A machine that turns coffee into code.",
+    "Computers are fast; programmers keep it slow.",
+    "When I wrote this code, only God and I understood what I did. Now only God knows.",
+    "A son asked his father (a programmer) why the sun rises in the east, and sets in the west. His response? It works, don't touch!",
+    "Copy-and-Paste was programmed by programmers for programmers actually.",
+    "Software and cathedrals are much the same — first we build them, then we pray.",
+    "There are two ways to write error-free programs; only the third works.",
+    "If debugging is the process of removing bugs, then programming must be the process of putting them in.",
+    "Deleted code is debugged code.",
+    "It's not a bug — it's an undocumented feature.", "It works on my machine.",
+    "In a room full of top software designers, if two agree on the same thing, that's a majority.",
+    "Programmer: A person who fixed a problem that you don't know you have, in a way you don't understand.",
+    "Algorithm: Word used by programmers when... they do not want to explain what they did.",
+    "What is a programmer's favourite hangout place? Foo Bar",
+    "What do computers and air conditioners have in common? They both become useless when you open windows.",
+    "Real programmers count from 0.", "I use arch btw :)",
+    "Linux is better than Windows"
+  ],
+  "textTemplate":"$text\n\nUpdated every 2 minutes.\nMy website: https://jzitnik.is-a.dev",
+  "token": "",
+  "password": "some-password",
+  "updatingInMinutes": 2,
+  "webserver": {"host": "0.0.0.0", "port": 1750}
+}
