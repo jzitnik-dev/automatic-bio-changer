@@ -1,5 +1,5 @@
 # Automatic bio changer
-Discord bio changer is program that will automatically change your bio on supported platforms.
+Automatic bio changer is program that will automatically change your bio on supported platforms.
 ## Supported platforms
 1. Github
 2. Discord
