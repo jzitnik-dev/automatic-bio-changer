@@ -1,12 +1,14 @@
-# Discord bio changer
-Discord bio changer is program that will automatically change your Discord bio.
+# Automatic bio changer
+Discord bio changer is program that will automatically change your bio on supported platforms.
+## Supported platforms
+1. Github
+2. Discord
 ## Disclaimer
-**This is against the DISCORD'S TERMS OF SERVICE**.
-
+If you use it with discord **it is against the DISCORD'S TERMS OF SERVICE**.
 You can get banned from Discord.
 **Use this program at your own risk.**
 
-Do not spam the API to much or you will get banned.
+Do not spam the API to much.
 
 ## Features
 1. Web interface
@@ -19,12 +21,12 @@ You can install this program to you own server.
 
 ### 1. Clone this repository
 ```
-git clone https://github.com/JZITNIK-github/discord-bio-changer
+git clone https://github.com/JZITNIK-github/automatic-bio-changer
 ```
 
 ### 2. Go to src folder
 ```
-cd discord-bio-changer/src
+cd automatic-bio-changer/src
 ```
 
 ### 3. Install required libraries
@@ -47,11 +49,34 @@ randomStrings key should have a list with strings that will be randomly chosen.
 textTemplate key should have a string that will be used as the template.
 \$text will be replaced with the randomly chosen text from randomStrings.
 ### token
-token key should have a string with you discord token.
-**Do not share this code with anyone.**
-If you leaked your discord token, change your password immediately!
+token should have dictionary with tokens that you want use with service
+**Do not share token with anyone.**
+If you leaked your token, change your password immediately!
 #### How to get your token
-[Here is the link to the tutorial.](https://www.androidauthority.com/get-discord-token-3149920/)
+
+Discord:
+
+[Here is the link to the tutorial for discord token.](https://www.androidauthority.com/get-discord-token-3149920/)
+
+Github:
+
+1. Go to [this link](https://github.com/settings/tokens)
+
+2. Click "Generate new token"
+
+![Image](/images/token/github/1.png)
+
+3. Click "Generate new token (classic)
+
+4. Set "Note" to "change-bio" and "expiration" to "No expiration"
+
+5. Scroll down a bit and select user
+
+![Image](/images/token/github/2.png)
+
+6. Click "Generate token"
+
+7. Copy generated token and paste it into configuration file.
 ### password
 password is used to change text or shutdown the server from Web interface.
 **Do not share this password with anyone.**
@@ -60,7 +85,7 @@ updatingInMinutes key sould have how many times should bio be updated.
 
 If you type 2, text will be updated every 2 minutes.
 
-Do not put this number under 0.5 minutes or you'll be probably banned for spamming the discord API.
+Do not put this number under 0.5 minutes or you'll be probably suspended for spamming the API.
 ### webserver
 webserver key sould have a information about the webserver
 
