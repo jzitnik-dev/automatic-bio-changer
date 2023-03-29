@@ -1,47 +1,134 @@
-<h1>Text right now:</h1>
-<p>$nowText<p>
-<h1>Last change</h1>
-<p>$lastChange</p>
-<h1>Dashboard</h1>
-<button onclick="changeText()">Change text</button><br>
-<button onclick="window.location.href = '/logs'">Get logs</button><br>
-<button onclick="stopServer()">Stop server</button><br>
-
-
-<script>
-    function changeText() {
-        var pass = prompt("Enter password:");
-        if (pass != null) {
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open( "GET", "/changeText?password="+pass, false ); 
-            xmlHttp.send( null );
-            if (xmlHttp.responseText == "true") {
-                alert("Text was changed successfully.");
-                window.location.reload();
-            }
-            else if (xmlHttp.responseText == "wrongpass" ) {
-                alert("Wrong password");
-            }
-            else {
-                alert("Error occurred.");
-            }
-        }
-    }
-    function stopServer() {
-        var pass = prompt("Enter password:");
-        if (pass != null) {
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open( "GET", "/stopServer?password="+pass, false ); 
-            xmlHttp.send( null );
-            if (xmlHttp.responseText == "wrongpass" ) {
-                alert("Wrong password");
-            }
-            else if (xmlHttp.responseText == "true") {
-                alert("Server was stopped.");
-            }
-            else {
-                alert("Error occurred.");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Automatic Bio Changer | Web interface</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <script>
+        function changeText() {
+            var pass = prompt("Enter password:");
+            if (pass != null) {
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open( "GET", "/changeText?password="+pass, false ); 
+                xmlHttp.send( null );
+                if (xmlHttp.responseText == "true") {
+                    alert("Text was changed successfully.");
+                    window.location.reload();
+                }
+                else if (xmlHttp.responseText == "wrongpass" ) {
+                    alert("Wrong password");
+                }
+                else {
+                    alert("Error occurred.");
+                }
             }
         }
-    }
-</script>
+        function stopServer() {
+            var pass = prompt("Enter password:");
+            if (pass != null) {
+                var xmlHttp = new XMLHttpRequest();
+                xmlHttp.open( "GET", "/stopServer?password="+pass, false ); 
+                xmlHttp.send( null );
+                if (xmlHttp.responseText == "wrongpass" ) {
+                    alert("Wrong password");
+                }
+                else if (xmlHttp.responseText == "true") {
+                    alert("Server was stopped.");
+                    document.querySelector(".blackdiv").style.display = "block";
+                    setTimeout(()=>{
+                        document.querySelector(".blackdiv").style.opacity = "1";
+                    })
+                }
+                else {
+                    alert("Error occurred.");
+                }
+            }
+        }
+    </script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box!important;
+            font-family: 'Roboto', sans-serif;
+        }
+        a {
+            text-decoration: none;
+        }
+        header {
+            width: 100vw;
+            height: 50px;
+            background-color: #292929;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding-left: 30px;
+            margin-right: 30px;
+            font-size: 30px;
+        }
+        header .links {
+            position: absolute;
+            right: 0;
+            font-size: 20px;
+            display: flex;
+        }
+        header .links .link {
+            margin: 10px;
+            cursor: pointer;
+            transition: ease 0.4s color;
+            color: white;
+        }
+        header .links .link:hover {
+            color: rgb(67, 67, 255);
+        }
+        section {
+            width: 100vw;
+            height: auto;
+            text-align: center;
+            padding: 20px
+        }
+        section h1{
+            font-size: 40px;
+        }
+        .blackdiv {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: 10;
+            background-color: black;
+            opacity: 0;
+            display: none;
+            transition: linear 3s opacity;
+        }
+    </style>
+</head>
+<body>
+    <div class="blackdiv">
+
+    </div>
+    <header>
+        <span class="title">Automatic Bio Changer | Web interface</span>
+        <div class="links">
+            <a href="/logs"><div class="link">Logs</div></a>
+            <div class="link" onclick="changeText()">Change text</div>
+            <div class="link" onclick="stopServer()">Stop server</div>
+        </div>
+    </header>
+    <main>
+        <section>
+            <h1>Text right now:</h1>
+            <p>$nowText<p>
+        </section>
+        <section>
+            <h1>Last change</h1>
+            <p>$lastChange</p>
+        </section>
+    </main>
+</body>
+</html>
