@@ -26,9 +26,6 @@ except FileNotFoundError:
 if (not isinstance(config["randomStrings"], list)):
     print("Fatal Error: Setting randomStrings must be a list with strings!")
     exit()
-if (not isinstance(config["token"], str)):
-    print("Fatal Error: Setting token must be a string!")
-    exit()
 if (not isinstance(config["password"], str)):
     print("Fatal Error: Setting password must be a string!")
     exit()
@@ -49,26 +46,29 @@ elif ((not isinstance(config["webserver"], bool)) and not isinstance(config["web
 elif ((not isinstance(config["webserver"], bool)) and not isinstance(config["webserver"]["port"], int)):
     print("Fatal Error: Setting webserver port must be a int.")
     exit()
-if (is_port_in_use(config["webserver"]["port"])):
-    print("Fatal Error: Provided port is used.")
-    exit()
 if (config["password"] == ""):
     print("Fatal Error: Password cannot be empty.")
     exit()
 if (config["updatingInMinutes"] < 0.2):
     print("Fatal Error: For security reasons you cannot have updating less than 0.2 minutes.")
     exit()
+if (config["webserver"]):
+    if (is_port_in_use(config["webserver"]["port"])):
+        print("Fatal Error: Provided port is used.")
+        exit()
 # Web server
 logInfo = ""
 nowtext = "unknown"
 lastChange = "unknown"
 validToken = True
+
+
+
+# WebServer
 app = Flask('')
 app.logger.disabled = True
 log = logging.getLogger('werkzeug')
 log.disabled = True
-
-
 @app.route("/stopServer")
 def stopS():
     passwd = request.args.get("password")
@@ -83,8 +83,6 @@ def stopS():
         return "true"
     else:
         return "wrongpass"
-
-
 @app.route("/logs")
 def logs():
     if (validToken == False):
@@ -124,52 +122,79 @@ def webserverRun():
     if (config["webserver"] != False):
         app.run(host=config["webserver"]["host"],
                 port=config["webserver"]["port"])
+        
+
+
 # Text changing
-
-
 def changingText():
     while True:
         changeText()
         time.sleep(config["updatingInMinutes"] * 60)
-
-
 def changeText():
     textNow = random.choice(config["randomStrings"])
     now = datetime.now()
     global lastChange
+    global logInfo
     lastChange = now.strftime("%d/%m/%Y %H:%M:%S")
     final = config["textTemplate"].replace("$text", textNow)
-    r = requests.patch(url="https://discord.com/api/v9/users/@me",
-                       headers={"authorization": config["token"]}, json={"bio": final})
-    response = json.loads(r.content)
-    if (response.get("message", None) != None):
-        if ("401" in response["message"]):
-            print("Token is invalid! Restart server.")
-            global validToken
-            validToken = False
-            sys.exit()
-        else:
-            print("error")
+
+    # Discord
+    if (config["tokens"].get("token", False) == False):
+        pass
     else:
-        global nowtext
-        nowtext = textNow
-        global logInfo
-        logInfo += lastChange+" Text was changed to: "+textNow+"\n"
+        r = requests.patch(url="https://discord.com/api/v9/users/@me",
+                        headers={"authorization": config["tokens"]["discord"]}, json={"bio": final})
+        response = json.loads(r.content)
+        if (response.get("message", None) != None):
+            if ("401" in response["message"]):
+                print("Discord: Token is invalid! Restart server.")
+                global validToken
+                validToken = False
+                sys.exit()
+            else:
+                print("Discord: unknown error")
+                logInfo += lastChange+" Discord: unknown error"
+        logInfo += lastChange+"Discord: Text was changed to: "+textNow+"\n"
+    # Github
+    if (config["tokens"].get("github", False) == False):
+        pass
+    else:
+        response = requests.patch('https://api.github.com/user', headers={'Authorization': 'Bearer '+config["tokens"]["github"]}, data=json.dumps({"bio": final}))
+        if (response.status_code == 200):
+            logInfo += lastChange+" Github: Text was changed to: "+textNow+"\n"
+        elif (response.status_code == 304):
+            print("Github: Bio cannot be changed!")
+            logInfo += lastChange+" Error: Bio for github cannot be changed!"
+        elif (response.status_code ==401 or response.status_code == 403):
+            print("Github: Token is invalid! Restart server.")
+            validToken = False
+            sys.exit();
+        elif (response.status_code == 422):
+            print("Github: Api was spammed. Try again later.")
+            logInfo += lastChange+" Github: Api was spammed. Try again later."
+        else:
+            print("Github: unknown error "+str(response.status_code))
+            logInfo += lastChange+" Github: unknown error "+str(response.status_code)
+
+
+    global nowtext
+    nowtext = textNow
+
+
 # Clear console
-
-
 def clearConsole():
     try:
         os.system('cls' if os.name == 'nt' else 'clear')
     except:
         print("Error occurred while clearing console.")
 
-
+# Make Thread
 textChanger = threading.Thread(target=changingText)
 textChanger.daemon = True
 webserver = threading.Thread(target=webserverRun)
 webserver.daemon = True
-#  Start
+
+# Start
 print("Starting text changer engine.")
 textChanger.start()
 if (config["webserver"] != False):
