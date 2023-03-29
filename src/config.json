@@ -12,5 +12,5 @@
   },
   "password": "some-password",
   "updatingInMinutes": 2,
-  "webserver": {"host": "0.0.0.0", "port": 1234}
+  "webserver": {"host": "0.0.0.0", "port": 80}
 }
