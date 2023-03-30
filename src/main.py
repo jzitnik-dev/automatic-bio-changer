@@ -139,7 +139,7 @@ def changeText():
     final = config["textTemplate"].replace("$text", textNow)
 
     # Discord
-    if (config["tokens"].get("token", False) == False):
+    if (config["tokens"].get("discord", False) == False):
         pass
     else:
         r = requests.patch(url="https://discord.com/api/v9/users/@me",
