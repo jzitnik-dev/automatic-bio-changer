@@ -107,6 +107,10 @@ def change():
         else:
             return "wrongpass"
 
+@app.errorhandler(500)
+def error500(e):
+    with open(os.path.join(os.path.dirname(os.path.realpath(__file__)),"pages", "500.html")) as f:
+        return f.read()
 
 @app.errorhandler(404)
 def page_not_found(e):
