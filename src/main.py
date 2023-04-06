@@ -154,7 +154,7 @@ def changeText():
             else:
                 print("Discord: unknown error")
                 logInfo += lastChange+" Discord: unknown error"
-        logInfo += lastChange+"Discord: Text was changed to: "+textNow+"\n"
+        logInfo += lastChange+" Discord: Text was changed to: "+textNow+"\n"
     # Github
     if (config["tokens"].get("github", False) == False):
         pass
@@ -164,17 +164,17 @@ def changeText():
             logInfo += lastChange+" Github: Text was changed to: "+textNow+"\n"
         elif (response.status_code == 304):
             print("Github: Bio cannot be changed!")
-            logInfo += lastChange+" Error: Bio for github cannot be changed!"
+            logInfo += lastChange+" Error: Bio for github cannot be changed!\n"
         elif (response.status_code ==401 or response.status_code == 403):
             print("Github: Token is invalid! Restart server.")
             validToken = False
             sys.exit();
         elif (response.status_code == 422):
-            print("Github: Api was spammed. Try again later.")
-            logInfo += lastChange+" Github: Api was spammed. Try again later."
+            print("Github: Api was spammed or your text is too long. Try again later.",response)
+            logInfo += lastChange+" Github: Api was spammed or your text is too long. Try again later or change your template.\n"
         else:
             print("Github: unknown error "+str(response.status_code))
-            logInfo += lastChange+" Github: unknown error "+str(response.status_code)
+            logInfo += lastChange+" Github: unknown error "+str(response.status_code)+"\n"
 
 
     global nowtext
