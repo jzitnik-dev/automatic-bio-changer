@@ -9,13 +9,17 @@ import json
 import socket
 from flask import Flask, request
 from datetime import datetime
-
-
 def is_port_in_use(port: int) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         return s.connect_ex(('localhost', port)) == 0
+# Clear console
+def clearConsole():
+    try:
+        os.system('cls' if os.name == 'nt' else 'clear')
+    except:
+        print("Error occurred while clearing console.")
 
-print()
+
 try:
     with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config.json")) as f:
         config = json.loads(f.read())
@@ -56,7 +60,7 @@ if (config["webserver"]):
     if (is_port_in_use(config["webserver"]["port"])):
         print("Fatal Error: Provided port is used.")
         exit()
-# Web server
+
 logInfo = ""
 nowtext = "unknown"
 lastChange = "unknown"
@@ -69,6 +73,7 @@ app = Flask('')
 app.logger.disabled = True
 log = logging.getLogger('werkzeug')
 log.disabled = True
+
 @app.route("/stopServer")
 def stopS():
     passwd = request.args.get("password")
@@ -126,10 +131,42 @@ def webserverRun():
     if (config["webserver"] != False):
         app.run(host=config["webserver"]["host"],
                 port=config["webserver"]["port"])
-        
-
-
 # Text changing
+class Change:
+    def discord(text, lastChange):
+        
+        r = requests.patch(url="https://discord.com/api/v9/users/@me",
+                        headers={"authorization": config["tokens"]["discord"]}, json={"bio": text})
+        response = json.loads(r.content)
+        if (response.get("message", None) != None):
+            if ("401" in response["message"]):
+                print("Discord: Token is invalid! Restart server.")
+                global validToken
+                validToken = False
+                sys.exit()
+            else:
+                print("Discord: unknown error")
+                logInfo += lastChange+" Discord: unknown error"
+        logInfo += lastChange+" Discord: Text was changed to: "+text+"\n"
+    
+    def github(text,lastChange):
+        response = requests.patch('https://api.github.com/user', headers={'Authorization': 'Bearer '+config["tokens"]["github"]}, data=json.dumps({"bio": text}))
+        if (response.status_code == 200):
+            logInfo += lastChange+" Github: Text was changed to: "+text+"\n"
+        elif (response.status_code == 304):
+            print("Github: Bio cannot be changed!")
+            logInfo += lastChange+" Error: Bio for github cannot be changed!\n"
+        elif (response.status_code ==401 or response.status_code == 403):
+            print("Github: Token is invalid! Restart server.")
+            validToken = False
+            sys.exit();
+        elif (response.status_code == 422):
+            print("Github: Api was spammed or your text is too long. Try again later.",response)
+            logInfo += lastChange+" Github: Api was spammed or your text is too long. Try again later or change your template.\n"
+        else:
+            print("Github: unknown error "+str(response.status_code))
+            logInfo += lastChange+" Github: unknown error "+str(response.status_code)+"\n"
+
 def changingText():
     while True:
         changeText()
@@ -146,57 +183,22 @@ def changeText():
     if (config["tokens"].get("discord", False) == False):
         pass
     else:
-        r = requests.patch(url="https://discord.com/api/v9/users/@me",
-                        headers={"authorization": config["tokens"]["discord"]}, json={"bio": final})
-        response = json.loads(r.content)
-        if (response.get("message", None) != None):
-            if ("401" in response["message"]):
-                print("Discord: Token is invalid! Restart server.")
-                global validToken
-                validToken = False
-                sys.exit()
-            else:
-                print("Discord: unknown error")
-                logInfo += lastChange+" Discord: unknown error"
-        logInfo += lastChange+" Discord: Text was changed to: "+textNow+"\n"
+        Change.discord(final, lastChange)
     # Github
     if (config["tokens"].get("github", False) == False):
         pass
     else:
-        response = requests.patch('https://api.github.com/user', headers={'Authorization': 'Bearer '+config["tokens"]["github"]}, data=json.dumps({"bio": final}))
-        if (response.status_code == 200):
-            logInfo += lastChange+" Github: Text was changed to: "+textNow+"\n"
-        elif (response.status_code == 304):
-            print("Github: Bio cannot be changed!")
-            logInfo += lastChange+" Error: Bio for github cannot be changed!\n"
-        elif (response.status_code ==401 or response.status_code == 403):
-            print("Github: Token is invalid! Restart server.")
-            validToken = False
-            sys.exit();
-        elif (response.status_code == 422):
-            print("Github: Api was spammed or your text is too long. Try again later.",response)
-            logInfo += lastChange+" Github: Api was spammed or your text is too long. Try again later or change your template.\n"
-        else:
-            print("Github: unknown error "+str(response.status_code))
-            logInfo += lastChange+" Github: unknown error "+str(response.status_code)+"\n"
-
+        Change.github(final, lastChange)
 
     global nowtext
     nowtext = textNow
 
 
-# Clear console
-def clearConsole():
-    try:
-        os.system('cls' if os.name == 'nt' else 'clear')
-    except:
-        print("Error occurred while clearing console.")
+
 
 # Make Thread
-textChanger = threading.Thread(target=changingText)
-textChanger.daemon = True
-webserver = threading.Thread(target=webserverRun)
-webserver.daemon = True
+textChanger = threading.Thread(target=changingText, daemon=True)
+webserver = threading.Thread(target=webserverRun, daemon=True)
 
 # Start
 print("Starting text changer engine.")
@@ -206,6 +208,7 @@ if (config["webserver"] != False):
     webserver.start()
 
 time.sleep(1)
+# Cli interface
 if (validToken == False):
     print("Click enter to stop the server.")
     input()
