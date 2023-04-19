@@ -48,6 +48,28 @@
                 }
             }
         }
+        function getStatus() {
+            fetch("/status")
+            .then(response => response.json())
+            .then(response => {
+                document.querySelector("#enginestatus").innerHTML = response.engine ? "<span style='color: green;'>running</span>" : "<span style='color: red;'>error (not running)</span>";
+                var element = document.querySelector(".services")
+                element.innerHTML = ""
+                for (i in response["services"]) {
+                    var value = response["services"][i]
+                    var p = document.createElement("p")
+                    if (response.engine == false) {
+                        p.innerHTML = i+": "+ "<span style='color: red;'>not running because of the engine error</span>"
+                    }
+                    else {
+                        p.innerHTML = i+": "+ (value ? "<span style='color: green;'>running</span>": "<span style='color: red;'>not running (no token provided)</span>")
+                    }
+                    element.appendChild(p)
+                }
+            })
+        }
+        setInterval(getStatus,15000)
+        getStatus()
     </script>
     <style>
         * {
@@ -128,6 +150,13 @@
         <section>
             <h1>Last change</h1>
             <p>$lastChange</p>
+        </section>
+        <section>
+            <h1>Status</h1>
+            <p>Engine: <span id="enginestatus">unknown</span></p>
+            <div class="services">
+
+            </div>
         </section>
     </main>
 </body>

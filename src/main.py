@@ -98,6 +98,24 @@ def logs():
         else:
             return logInfo.replace("\n", "<br>")
 
+@app.route("/status")
+def status():
+    if (validToken == False):
+        return "notValidToken"
+    else:
+        returnVal = {
+            "engine": textChanger.is_alive(),
+            "services": {}
+        }
+        if returnVal["engine"] == False:
+            for i in config["tokens"]:
+                returnVal["services"][i] = False
+        else:
+            for i in config["tokens"]:
+                value = config["tokens"][i]
+                if (value == False): returnVal["services"][i] = False
+                else: returnVal["services"][i] = True
+        return json.dumps(returnVal)
 
 @app.route("/changeText")
 def change():
@@ -132,40 +150,53 @@ def webserverRun():
         app.run(host=config["webserver"]["host"],
                 port=config["webserver"]["port"])
 # Text changing
+class Console:
+    def error(message):
+        global logInfo
+        print(message)
+        logInfo += lastChange+" "+message+"\n"
+    def log(message):
+        global logInfo
+        logInfo += lastChange+" "+message+"\n"
+    
 class Change:
-    def discord(text, lastChange):
-        
-        r = requests.patch(url="https://discord.com/api/v9/users/@me",
-                        headers={"authorization": config["tokens"]["discord"]}, json={"bio": text})
-        response = json.loads(r.content)
-        if (response.get("message", None) != None):
-            if ("401" in response["message"]):
-                print("Discord: Token is invalid! Restart server.")
+    def discord(text, justarandomtext):
+        try:
+            r = requests.patch(url="https://discord.com/api/v9/users/@me",headers={"authorization": config["tokens"]["discord"]}, json={"bio": text})
+        except requests.exceptions.ConnectTimeout:
+            Console.error("Discord: No internet connection.")
+        else:
+            response = json.loads(r.content)
+            if (response.get("message", None) != None):
+                if ("401" in response["message"]):
+                    print("Discord: Token is invalid! Restart server.")
+                    global validToken
+                    validToken = False
+                    sys.exit()
+                else:
+                    Console.error("Discord: unknown error")
+            else:
+                Console.log("Discord: Text was changed to: "+justarandomtext)
+    
+    def github(text, justarandomtext):
+        try:
+            response = requests.patch('https://api.github.com/user', headers={'Authorization': 'Bearer '+config["tokens"]["github"]}, data=json.dumps({"bio": text}))
+        except requests.exceptions.ConnectionError:
+            Console.error("Github: No internet connection.")
+        else:
+            if (response.status_code == 200):
+                Console.log("Github: Text was changed to: "+justarandomtext)
+            elif (response.status_code == 304):
+                Console.error("Github: Bio cannot be changed!")
+            elif (response.status_code ==401 or response.status_code == 403):
+                print("Github: Token is invalid! Restart server.")
                 global validToken
                 validToken = False
-                sys.exit()
+                sys.exit();
+            elif (response.status_code == 422):
+                Console.log("Github: Your bio is probably too long. Please change your template or you strings.")
             else:
-                print("Discord: unknown error")
-                logInfo += lastChange+" Discord: unknown error"
-        logInfo += lastChange+" Discord: Text was changed to: "+text+"\n"
-    
-    def github(text,lastChange):
-        response = requests.patch('https://api.github.com/user', headers={'Authorization': 'Bearer '+config["tokens"]["github"]}, data=json.dumps({"bio": text}))
-        if (response.status_code == 200):
-            logInfo += lastChange+" Github: Text was changed to: "+text+"\n"
-        elif (response.status_code == 304):
-            print("Github: Bio cannot be changed!")
-            logInfo += lastChange+" Error: Bio for github cannot be changed!\n"
-        elif (response.status_code ==401 or response.status_code == 403):
-            print("Github: Token is invalid! Restart server.")
-            validToken = False
-            sys.exit();
-        elif (response.status_code == 422):
-            print("Github: Api was spammed or your text is too long. Try again later.",response)
-            logInfo += lastChange+" Github: Api was spammed or your text is too long. Try again later or change your template.\n"
-        else:
-            print("Github: unknown error "+str(response.status_code))
-            logInfo += lastChange+" Github: unknown error "+str(response.status_code)+"\n"
+                Console.error("Github: unknown error "+str(response.status_code))
 
 def changingText():
     while True:
@@ -175,7 +206,6 @@ def changeText():
     textNow = random.choice(config["randomStrings"])
     now = datetime.now()
     global lastChange
-    global logInfo
     lastChange = now.strftime("%d/%m/%Y %H:%M:%S")
     final = config["textTemplate"].replace("$text", textNow)
 
@@ -183,13 +213,12 @@ def changeText():
     if (config["tokens"].get("discord", False) == False):
         pass
     else:
-        Change.discord(final, lastChange)
+        Change.discord(final, textNow)
     # Github
     if (config["tokens"].get("github", False) == False):
         pass
     else:
-        Change.github(final, lastChange)
-
+        Change.github(final, textNow)
     global nowtext
     nowtext = textNow
 
@@ -219,12 +248,14 @@ else:
     clearConsole()
     while True:
         print("""Commands:
-        !stop Stop a server
-        !log Get log information
-        !current Get current bio
-        !clear Clear console
-        !change Change current text""")
-        ins = input()
+!stop Stop a server
+!log Get log information
+!current Get current bio
+!clear Clear console
+!change Change current text
+!about About automatic bio changer
+""")
+        ins = input("Command: ").strip()
         if (ins == "!stop"):
             sys.exit()
         elif (ins == "!log"):
@@ -241,5 +272,11 @@ else:
             clearConsole()
             changeText()
             print("Text was changed.")
+        elif (ins == "!about"):
+            clearConsole()
+            print("""Automatic bio changer is script written in python to automatically change your bio on supported platforms.
+Created by JZITNIK
+Github repository: https://github.com/JZITNIK-github/automatic-bio-changer
+""")
         else:
             print(ins+" is not a valid command.")
