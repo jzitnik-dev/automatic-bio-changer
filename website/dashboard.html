@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashbard | Automatic bio changer</title>
+    <script>
+        function logout() {
+            const session = getCookie("session")
+            fetch("/api/logout", {
+                method: 'GET',
+                headers: {
+                    session: session
+                }
+            })
+                .then(res => res.json())
+                .then(res => {
+                    if (res["message"] != "success") {
+                        alert("Session was not removed!")
+                    }
+                    eraseCookie("session")
+                    window.location.replace("/")
+                })
+        }
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+        }
+        function eraseCookie(name) {
+            document.cookie = name + '=; Max-Age=-99999999;';
+        }
+
+        function login(session) {
+            function getStatus() {
+                fetch("/api/getStatus", {
+                    method: 'GET',
+                    headers: {
+                        session: session
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                            return;
+                        }
+
+                        var el = document.querySelector(".statuselements")
+                        if (Object.keys(res).includes("error")) {
+                            el.innerHTML = "Error while fetching status!"
+                        }
+                        else if (Object.keys(res).length == 0) {
+                            el.innerHTML = "No services are running!"
+                        }
+                        else {
+                            function capitalizeFirstCharacter(str) {
+                                return str.charAt(0).toUpperCase() + str.slice(1);
+                            }
+                            el.innerHTML = ""
+                            for (const service of Object.keys(res)) {
+                                var p = document.createElement("p")
+                                if (res[service]) {
+                                    p.innerHTML = `<p>${capitalizeFirstCharacter(service)}: <span style='color: green;'>Running</span></p>`
+                                }
+                                else {
+                                    p.innerHTML = `<p>${capitalizeFirstCharacter(service)}: <span style='color: red;'>Error</span></p>`
+                                }
+                                el.appendChild(p)
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        document.querySelector(".statuselements").innerHTML = "Error while fetching status!"
+                    })
+            }
+            getStatus()
+            setInterval(getStatus, 5000);
+
+
+            function getLogs() {
+                fetch("/api/getLogs", {
+                    method: 'GET',
+                    headers: {
+                        session: session
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.message == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                            return;
+                        }
+
+                        var el = document.querySelector(".logdiv")
+                        if (Object.keys(res).includes("error")) {
+                            el.innerHTML = "Error while fetching status!"
+                        }
+                        else {
+                            const scrolled = el.scrollTop === (el.scrollHeight - el.offsetHeight)
+                            el.innerHTML = res.data.replaceAll("\n", "<br>")
+                            if (scrolled) el.scrollTo(0, setTimeout(() => el.scrollTo(0, el.scrollHeight), 20));
+
+                        }
+                    })
+                    .catch(() => {
+                        document.querySelector(".logdiv").innerHTML = "Error while fetching status!"
+                    })
+            }
+            setInterval(getLogs, 3000)
+            getLogs()
+
+            function getInfo() {
+                fetch("/api/getInfo", {
+                    method: 'GET',
+                    headers: {
+                        session: session
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.message == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                            return;
+                        }
+
+                        var el = document.querySelector(".infodiv")
+                        if (Object.keys(res).includes("error")) {
+                            el.innerHTML = "Error while fetching info!"
+                        }
+                        else if (Object.keys(res).length == 0) {
+                            el.innerHTML = "No info is available!"
+                        }
+                        else {
+                            function capitalizeFirstCharacter(str) {
+                                return str.charAt(0).toUpperCase() + str.slice(1);
+                            }
+                            el.innerHTML = ""
+                            for (const service of Object.keys(res)) {
+                                const data = res[service]
+                                const div = document.createElement("div")
+                                var content = `<h3>${capitalizeFirstCharacter(service)}</h3><p>Token: $tokeninfo<p>`
+
+                                if (data["status"] == "working") {
+                                    content = content.replace("$tokeninfo", "<span style='color: green;'>Working</span>")
+                                }
+                                else if (data["status"] == "tokenerror") {
+                                    content = content.replace("$tokeninfo", "<span style='color: red;'>Invalid</span>")
+                                }
+                                else {
+                                    content = content.replace("$tokeninfo", "<span style='color: gray;'>Unknown</span>")
+                                }
+
+                                if (data["change"]) {
+                                    content += `<p>Last change: ${data["change"]}</p>`
+                                }
+                                if (data["text"]) {
+                                    content += `<p>Text right now: ${data["text"]}</p>`
+                                }
+
+                                div.innerHTML = content
+                                el.append(div)
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        document.querySelector(".infodiv").innerHTML = "Error while fetching info!"
+                    })
+            }
+            setInterval(getInfo, 7000)
+            getInfo()
+        }
+
+        window.addEventListener("DOMContentLoaded", () => {
+            if (getCookie("session")) {
+                const options = {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionKey: getCookie("session") })
+                }
+                fetch("/api/testSession", options)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["message"] == "success") {
+                            login(getCookie("session"))
+                        }
+                        else if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            alert("An error occurred. Please try again in a moment.")
+                        }
+                    })
+                    .catch(() => {
+                        alert("An error occurred. Please try again in a moment.")
+                    })
+            }
+            else {
+                window.location.replace("/")
+            }
+        })
+
+        class Settings {
+            static open() {
+                Tokens.getTokens()
+                Template.getTemplate()
+                Updating.getUpdating()
+                Strings.loadStrings()
+                document.querySelector(".set").style.display = "block"
+            }
+            static showhide(el) {
+                var input = el.parentElement.querySelector('input')
+                if (input.type == "password") { input.type = "text"; el.textContent = "Hide"; }
+                else { input.type = "password"; el.textContent = "Show" }
+            }
+            static close() {
+                document.querySelector(".set").style.display = "none"
+            }
+        }
+
+        class Template {
+            static getTemplate() {
+                var textarea = document.querySelector("#templatetext")
+                fetch("/api/getTemplate", {
+                    method: 'GET',
+                    headers: {
+                        session: getCookie("session")
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.message == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                            return;
+                        }
+                        if (Object.keys(res).includes("error")) {
+                            textarea.value = "Error while fetching template!"
+                            return;
+                        }
+
+                        textarea.value = res["data"]
+                    })
+                    .catch(() => {
+                        textarea.value = "Error while fetching template!"
+                    })
+            }
+            static submitTemplate() {
+                const options = {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionKey: getCookie("session"), data: document.querySelector("#templatetext").value })
+                }
+                fetch("/api/setTemplate", options)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["message"] == "success") {
+                            alert("Template was changed!")
+                        }
+                        else if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            alert("An error occurred. Please try again in a moment.")
+                        }
+                    })
+                    .catch(() => {
+                        alert("An error occurred. Please try again in a moment.")
+                    })
+            }
+        }
+
+        class Tokens {
+            static getTokens() {
+                fetch("/api/getTokens", {
+                    method: 'GET',
+                    headers: {
+                        session: getCookie("session")
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (Object.keys(res).includes("error")) {
+                            document.querySelector("#tokenserror").textContent = "Failed to fetch a tokens!"
+                        }
+                        else if (res.message == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            document.querySelector("#tokenserror").innerHTML = ""
+                            var els = document.querySelector(".tokensdiv .tokenscontainer")
+                            var resdata = JSON.parse(res.data)
+                            for (const service of Object.keys(resdata)) {
+                                const token = resdata[service]
+                                els.querySelector(".token." + service).querySelector("input").value = token
+                            }
+                        }
+                    })
+                    .catch(() => {
+                        document.querySelector("#tokenserror").textContent = "Failed to fetch a tokens!"
+                    })
+            }
+            static submitTokens() {
+                const services = ["github", "discord"]
+                var final = {}
+                for (const service of services) {
+                    var value = document.querySelector(".tokensdiv .tokenscontainer .token." + service + " input").value
+                    if (value !== "") final[service] = value
+                }
+
+                // Make request
+                const options = {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionKey: getCookie("session"), data: final })
+                }
+                fetch("/api/setTokens", options)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["message"] == "restarting") {
+                            alert("Server was stopped. Now you need to start the python script again.")
+                        }
+                        else if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            alert("An error occurred. Please try again in a moment.")
+                        }
+                    })
+                    .catch(() => {
+                        alert("An error occurred. Please try again in a moment.")
+                    })
+            }
+        }
+
+        class Updating {
+            static getUpdating() {
+                var textarea = document.querySelector("#updatinginminutes")
+                fetch("/api/getUpdating", {
+                    method: 'GET',
+                    headers: {
+                        session: getCookie("session")
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res.message == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                            return;
+                        }
+                        if (Object.keys(res).includes("error")) {
+                            document.querySelector("errorupdating").value = "Error while fetching template!"
+                            return;
+                        }
+
+                        textarea.value = res["data"]
+                    })
+                    .catch(() => {
+                        document.querySelector("errorupdating").value = "Error while fetching template!"
+                    })
+            }
+            static submitUpdating() {
+                const options = {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionKey: getCookie("session"), data: parseFloat(document.querySelector("#updatinginminutes").value) })
+                }
+                fetch("/api/setUpdating", options)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["message"] == "success") {
+                            alert("Updating was changed!")
+                        }
+                        else if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            alert("An error occurred. Please try again in a moment.")
+                        }
+                    })
+                    .catch(() => {
+                        alert("An error occurred. Please try again in a moment.")
+                    })
+            }
+        }
+
+        class Strings {
+            static update(strings) {
+                var el = document.querySelector(".stringsDiv")
+                el.innerHTML = ""
+                for (var i = 0; i < strings.length; i++) {
+                    const string = strings[i]
+
+                    const div = document.createElement("div")
+                    div.className = "string"
+                    div.setAttribute("stringId", i)
+
+                    const span = document.createElement("span")
+                    span.textContent = string + " "
+                    div.appendChild(span)
+
+                    const button = document.createElement("button")
+                    button.textContent = "Remove"
+                    button.setAttribute("onclick", "Strings.remove(this.parentElement)")
+                    div.appendChild(button)
+
+                    el.appendChild(div)
+                }
+            }
+            static STRINGS = []
+            static loadStrings() {
+                var errorDiv = document.querySelector("#stringserror")
+                fetch("/api/getStrings", {
+                    method: 'GET',
+                    headers: {
+                        session: getCookie("session")
+                    }
+                })
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["error"]) {
+                            errorDiv.textContent = "Error while fetching strings."
+                        }
+                        else if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            Strings.STRINGS = res["data"]
+                            Strings.update(res["data"])
+                        }
+                    })
+                    .catch(() => {
+                        errorDiv.textContent = "Error while fetching strings."
+                    })
+            }
+            static remove(el) {
+                const STRINGID = el.getAttribute("stringId")
+                Strings.STRINGS.splice(STRINGID, 1)
+                Strings.update(Strings.STRINGS)
+            }
+            static addString() {
+                const value = prompt("Enter a string value")
+                if (value) {
+                    Strings.STRINGS.push(value)
+                    Strings.update(Strings.STRINGS)
+                }
+            }
+            static export() {
+                function download(filename, text) {
+                    var element = document.createElement('a');
+                    element.setAttribute('href', 'data:text/plain;charset=utf-8,' + encodeURIComponent(text));
+                    element.setAttribute('download', filename);
+
+                    element.style.display = 'none';
+                    document.body.appendChild(element);
+
+                    element.click();
+
+                    document.body.removeChild(element);
+                }
+                download("strings.json", JSON.stringify(Strings.STRINGS))
+            }
+            static import() {
+                const answer = prompt("What type of import you want?\n\n1 - Remove all current strings and replace them with strings from json\n2 - Combine current strings and strings from json")
+                if (answer) {
+                    if (answer == "1") {
+                        const input = document.querySelector("#fileinput")
+                        document.querySelector("#fileinput").onchange = (e) => {
+                            var { target } = e
+                            const reader = new FileReader();
+                            reader.addEventListener('load', (e) => {
+                                const data = JSON.parse(e.target.result);
+                                Strings.STRINGS = data
+                                Strings.update(Strings.STRINGS)
+                            })
+                            reader.readAsText(target.files[0])
+                            target.value = ""
+                        }
+                        input.click()
+                    }
+                    else if (answer == "2") {
+                        const input = document.querySelector("#fileinput")
+                        document.querySelector("#fileinput").onchange = (e) => {
+                            var { target } = e
+                            const reader = new FileReader();
+                            reader.addEventListener('load', (e) => {
+                                const data = JSON.parse(e.target.result);
+                                Strings.STRINGS = Strings.STRINGS.concat(data)
+                                Strings.update(Strings.STRINGS)
+                            })
+                            reader.readAsText(target.files[0])
+                            target.value = ""
+                        }
+                        input.click()
+                    }
+                    else {
+                        setTimeout(() => {
+                            alert("Invalid choice")
+                        }, 20);
+                    }
+                }
+            }
+            static submit() {
+                const options = {
+                    method: "POST",
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ sessionKey: getCookie("session"), data: Strings.STRINGS })
+                }
+                fetch("/api/setStrings", options)
+                    .then(res => res.json())
+                    .then(res => {
+                        if (res["message"] == "success") {
+                            alert("Strings were updated")
+                        }
+                        else if (res["message"] == "wrongsession") {
+                            eraseCookie("session")
+                            window.location.replace("/")
+                        }
+                        else {
+                            alert("An error occurred. Please try again in a moment.")
+                        }
+                    })
+                    .catch(() => {
+                        alert("An error occurred. Please try again in a moment.")
+                    })
+            }
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            text-align: center;
+        }
+
+        button {
+            cursor: pointer;
+        }
+
+        header {
+            width: 100vw;
+            height: 50px;
+            background-color: #494949;
+            color: white;
+            display: flex;
+            align-items: center;
+            padding-left: 10px;
+        }
+
+        header .title {
+            font-size: 20px;
+        }
+
+        header .right {
+            position: absolute;
+            right: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header .right div {
+            cursor: pointer;
+        }
+
+        .content {
+            height: calc(100% - 50px);
+            width: 100%;
+        }
+
+        .logdiv {
+            max-height: 500px;
+            overflow-y: auto;
+            width: 100%;
+        }
+
+        .set {
+            width: 100vw;
+            height: 100vh;
+            position: absolute;
+            background-color: white;
+            padding: 10px;
+            z-index: 5;
+        }
+
+        .set .tokensdiv {
+            display: flex;
+            justify-content: center;
+        }
+
+        .set .tokensdiv .tokenscontainer {
+            border: 1px solid black;
+            padding-left: 10px;
+            padding-right: 10px;
+        }
+
+        .set .tokensdiv .tokenscontainer .token {
+            margin: 10px;
+        }
+
+        .set .closebtn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <input type="file" style="display: none;" id="fileinput">
+    <div class="set" style="display: none;">
+        <div class="closebtn" onclick="Settings.close()">X</div>
+        <h1>Settings</h1>
+        <h2>Tokens</h2>
+        <small>After changing tokens, program must be restarted.</small>
+        <div class="tokensdiv">
+            <div class="tokenscontainer">
+                <p style="color: red" id="tokenserror"></p>
+                <div class="token github"><span>Github</span>: <input type="password" placeholder="Your token"><button
+                        onclick="Settings.showhide(this)">Show</button></div>
+                <div class="token discord"><span>Discord</span>: <input type="password" placeholder="Your token"><button
+                        onclick="Settings.showhide(this)">Show</button></div>
+                <button style="margin-bottom: 10px;" onclick="Tokens.submitTokens()">Submit</button>
+            </div>
+        </div>
+        <h2 style="margin-top: 10px;">Template</h2>
+        <small>$text will be replaced with a randomly generated string</small><br>
+        <textarea id="templatetext"></textarea><br>
+        <button onclick="Template.submitTemplate()">Submit</button>
+        <h2 style="margin-top: 10px;">Updating</h2>
+        <small>How long should the program wait before setting another bio. If set to 2 bio will be changed every 2
+            minutes.</small><br>
+        <p id="errorupdating" style="color: red;"></p>
+        <input id="updatinginminutes" type="number" min="1">
+        <button onclick="Updating.submitUpdating()">Submit</button>
+        <h2 style="margin-top: 10px;">Strings</h2>
+        <button onclick="Strings.addString()">Add string</button><button onclick="Strings.import()">Import from
+            json</button><button onclick="Strings.export()">Export json</button>
+        <p id="stringserror" style="color: red;"></p>
+        <h3 style="margin-top: 5px;">Saved strings:</h3>
+        <div class="stringsDiv">
+
+        </div>
+        <button style="margin-top: 5px;" onclick="Strings.submit()">Submit</button>
+    </div>
+    <header>
+        <div class="title">Automatic Bio Changer</div>
+        <div class="right">
+            <div class="settings" onclick="Settings.open()">Settings</div>
+            <div class="settings" onclick="logout()">Logout</div>
+        </div>
+    </header>
+    <div class="content">
+        <h1>Information</h1>
+        <div class="infodiv"></div>
+        <h1>Status</h1>
+        <small>Status of services</small>
+        <div class="statuselements">
+            Loading...
+        </div>
+        <h1>Log</h1>
+        <div class="logdiv">
+            Loading...
+        </div>
+    </div>
+</body>
+
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@500&display=swap" rel="stylesheet">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Set password | Automatic Bio Changer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            height: 700px;
+            width: 400px;
+            background-color: rgb(204, 204, 204);
+            border-radius: 15px;
+            box-shadow: rgba(50, 50, 93, 0.25) 0px 13px 27px -5px, rgba(0, 0, 0, 0.3) 0px 8px 16px -8px;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        .container h1,
+        .container h2 {
+            text-align: center;
+        }
+
+        .container h2 {
+            color: transparent;
+            -webkit-background-clip: text;
+            background-clip: text;
+            background-image: linear-gradient(98deg, rgb(26, 78, 87) 0%, rgb(67, 125, 158), rgb(33, 150, 218) 100%);
+        }
+
+        .container p {
+            margin-top: 5px;
+        }
+
+        .container form {
+            margin-top: 10px;
+        }
+
+        .container input,
+        .container button {
+            width: 100%;
+            height: 40px;
+            padding-left: 10px;
+        }
+
+        .container button {
+            cursor: pointer;
+        }
+    </style>
+    <script>
+        function submitPass() {
+            const pass = document.querySelector("#pass").value
+            const passConfirm = document.querySelector("#passagain").value
+
+            if (pass !== passConfirm) {
+                alert("Passwords don't match.")
+                return;
+            }
+
+            if (pass.length < 7) {
+                alert("Password is shorter than 7 characters.")
+                return;
+            }
+
+            if (pass.length < 7) {
+                alert("Password is shorter than 7 characters.")
+                return;
+            }
+
+            if (!/\d/.test(pass)) {
+                alert("Password must contain a number")
+                return;
+            }
+
+            const options = {
+                method: "POST",
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ password: pass })
+            }
+            fetch("/api/setPassword",options)
+                .then(res => res.json())
+                .then(res => {
+                    if (res["message"] == "success") {
+                        alert("The password has been set successfully.")
+                        window.location.reload()
+                    }
+                    else {
+                        alert("An error occurred while setting the password. Please try again in a moment.")
+                    }
+                })
+                .catch(() => {
+                    alert("An error occurred while setting the password. Please try again in a moment.")
+                })
+        }
+    </script>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Welcome to</h1>
+        <h2>Automatic Bio Changer</h2>
+        <p>Let's create password!</p>
+        <input type="password" id="pass" placeholder="Password">
+        <input type="password" id="passagain" placeholder="Confirm password">
+        <button onclick="submitPass()">Submit</button>
+    </div>
+</body>
+
+</html>
