@@ -103,11 +103,19 @@ class Set:
     def error(typestr, errormsg):
         Set.addToLog(f"Error {typestr}: {errormsg}")
 # Changer
-def getRandomString(app):
+def getRandomString(app, i=0):
+    LEN = {"discord": 190, "github" : 160}
     randomStr = random.choice(STRINGS)
     data = json.load(open("data/realtime/data.json"))
     if (data.get(app,{}).get("text",False) == randomStr):
         return getRandomString(app)
+    if (len(CONFIG["template"].replace("$text", randomStr)) > LEN[app]):
+        if (i <= 20):
+            Set.addToLog(f"Warning {app}: Bio is too long! Selecting new random string.")
+            return getRandomString(app, i + 1)
+        else:
+            Set.addToLog(f"Error {app}: It wasn't possible to select a bio that was shorter than {LEN[app]} characters in 20 attempts. Giving up.")
+            return ""
     return randomStr
 if "discord" in TOKENS.keys():
     def discordChangerFunction():
