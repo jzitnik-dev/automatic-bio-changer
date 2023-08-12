@@ -1,4 +1,4 @@
 Flask==2.2.3
 Flask_Cors==4.0.0
-python_bcrypt==0.3.2
+bcrypt==4.0.1
 Requests==2.31.0
