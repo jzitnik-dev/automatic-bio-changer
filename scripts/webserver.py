@@ -225,7 +225,20 @@ def startWebServer():
             session = request.headers.get('session')
             sessions = json.load(open("data/secret/sessions.json"))
             if session in sessions:
-                return open("data/realtime/data.json").read()
+                def combine_dicts(dict1, dict2):
+                    combined_dict = dict1.copy()
+                    for key, value in dict2.items():
+                        if key in combined_dict:
+                            if isinstance(combined_dict[key], dict):
+                                combined_dict[key]["time"] = value
+                            else:
+                                combined_dict[key] = {"status": combined_dict[key], "time": value}
+                        else:
+                            combined_dict[key] = {"time": value}
+                    return combined_dict
+                data = json.load(open("data/realtime/data.json"))
+                times = json.load(open("data/realtime/time.json"))
+                return combine_dicts(data, times)
             else:
                 return jsonify({"message":"wrongsession"}), 200
 

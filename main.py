@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 import sys
 import threading
 import json
@@ -78,6 +78,7 @@ loadStringsJs()
 json.dump({},open("data/realtime/data.json","w"))
 with open("data/realtime/log.txt","w") as f: f.write("")
 json.dump({},open("data/realtime/status.json","w"))
+json.dump({},open("data/realtime/time.json","w"))
 
 
 # Start webserver
@@ -102,6 +103,13 @@ class Set:
         Set.addToLog(f"Error {typestr}: Token is invalid!")
     def error(typestr, errormsg):
         Set.addToLog(f"Error {typestr}: {errormsg}")
+    def time(typestr, time):
+        currentData = json.load(open("data/realtime/time.json"))
+        current_datetime = datetime.now()
+        delta = timedelta(seconds=time*60)
+        new_datetime = current_datetime + delta
+        currentData[typestr] = new_datetime.strftime("%d.%m.%Y %H:%M:%S")
+        json.dump(currentData, open("data/realtime/time.json","w"))
 # Changer
 def getRandomString(app, i=0):
     LEN = {"discord": 190, "github" : 160}
@@ -132,7 +140,7 @@ if "discord" in TOKENS.keys():
                 Set.error("discord", "Couldn't change bio on discord. No internet connection.")
             elif response == "unknownerror":
                 Set.error("discord", "Couldn't change bio on discord. Unknown error.")
-
+            Set.time("discord", CONFIG["updatingInMinutes"])
             time.sleep(CONFIG["updatingInMinutes"] * 60)
     discordChangerThread = threading.Thread(target=discordChangerFunction, daemon=True)
     discordChangerThread.start()
@@ -157,7 +165,7 @@ if "github" in TOKENS.keys():
                 Set.error("github", "Couldn't change bio on github. Error occured!")
             elif response == "unknownerror":
                 Set.error("github", "Couldn't change bio on github. Unknown error.")
-
+            Set.time("github", CONFIG["updatingInMinutes"])
             time.sleep(CONFIG["updatingInMinutes"] * 60)
 
     githubChangerThread = threading.Thread(target=githubChangerFunction, daemon=True)

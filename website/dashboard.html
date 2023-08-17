@@ -162,6 +162,9 @@
                                 if (data["text"]) {
                                     content += `<p>Text right now: ${data["text"]}</p>`
                                 }
+                                if (data["time"]) {
+                                    content += `<p>Next update: ${data["time"]}</p>`
+                                }
 
                                 div.innerHTML = content
                                 el.append(div)
