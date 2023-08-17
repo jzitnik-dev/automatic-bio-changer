@@ -11,6 +11,8 @@ class Changer:
             )
         except requests.exceptions.ConnectTimeout:
             return "noconnection"
+        except:
+            return "unknownerror"
         else:
             response = json.loads(r.content)
             if response.get("message", None) != None:
@@ -30,6 +32,8 @@ class Changer:
             )
         except requests.exceptions.ConnectionError:
             return "noconnection"
+        except:
+            return "unknownerror"
         else:
             if response.status_code == 200:
                 return "success"
