@@ -14,14 +14,17 @@ class Changer:
         except:
             return "unknownerror"
         else:
-            response = json.loads(r.content)
-            if response.get("message", None) != None:
-                if "401" in response["message"]:
-                    return "notvalidtoken"
+            try:
+                response = json.loads(r.content)
+                if response.get("message", None) != None:
+                    if "401" in response["message"]:
+                        return "notvalidtoken"
+                    else:
+                        return "unknownerror"
                 else:
-                    return "unknownerror"
-            else:
-                return "success"
+                    return "success"
+            except:
+                return "unknownerror"
 
     def github(text, token):
         try:
