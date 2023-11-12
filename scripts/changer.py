@@ -5,7 +5,7 @@ class Changer:
     def discord(text, token):
         try:
             r = requests.patch(
-                url="https://discord.com/api/v9/users/@me",
+                url="https://discord.com/api/v9/users/@me/profile",
                 headers={"authorization": token},
                 json={"bio": text},
             )
