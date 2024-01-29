@@ -4,6 +4,7 @@ import threading
 import json
 import time
 import random
+import os
 from scripts.changer import Changer
 from scripts.webserver import startWebServer
 
@@ -24,6 +25,15 @@ class Generator:
         json.dump(samplestrings, open("data/config/strings.json", "w"))
         return samplestrings
 
+def create_folder_if_not_exists(folder_path):
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+        print(f"Warning: Folder {folder_path} was not found! Creating it.")
+
+create_folder_if_not_exists("data");
+create_folder_if_not_exists("data/config");
+create_folder_if_not_exists("data/realtime");
+create_folder_if_not_exists("data/secret");
 
 # Load config.js
 def loadConfigJs():
@@ -86,23 +96,28 @@ startWebServer()
 
 # Set
 class Set:
+    @staticmethod
     def addToLog(text):
         with open("data/realtime/log.txt","a") as f:
             time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
             f.write(f"{time} {text}\n")
+    @staticmethod
     def data(typestr, text):
         time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
         currentData = json.load(open("data/realtime/data.json"))
         currentData[typestr] = {"status": "working", "change": time, "text": text}
         json.dump(currentData, open("data/realtime/data.json","w"))
         Set.addToLog(f"Success {typestr}: Bio was changed to: {text}")
+    @staticmethod
     def tokenError(typestr):
         currentData = json.load(open("data/realtime/data.json"))
         currentData[typestr] = {"status": "tokenerror"}
         json.dump(currentData, open("data/realtime/data.json","w"))
         Set.addToLog(f"Error {typestr}: Token is invalid!")
+    @staticmethod
     def error(typestr, errormsg):
         Set.addToLog(f"Error {typestr}: {errormsg}")
+    @staticmethod
     def time(typestr, time):
         currentData = json.load(open("data/realtime/time.json"))
         current_datetime = datetime.now()
@@ -125,50 +140,52 @@ def getRandomString(app, i=0):
             Set.addToLog(f"Error {app}: It wasn't possible to select a bio that was shorter than {LEN[app]} characters in 20 attempts. Giving up.")
             return ""
     return randomStr
-if "discord" in TOKENS.keys():
-    def discordChangerFunction():
-        while True:
-            text = getRandomString("discord")
-            final = CONFIG["template"].replace("$text", text)
-            response = Changer.discord(final, TOKENS["discord"])
 
-            if response == "success":
-                Set.data("discord", text)
-            elif response == "notvalidtoken":
-                Set.tokenError("discord")
-            elif response == "noconnection":
-                Set.error("discord", "Couldn't change bio on discord. No internet connection.")
-            elif response == "unknownerror":
-                Set.error("discord", "Couldn't change bio on discord. Unknown error.")
-            Set.time("discord", CONFIG["updatingInMinutes"])
-            time.sleep(CONFIG["updatingInMinutes"] * 60)
-    discordChangerThread = threading.Thread(target=discordChangerFunction, daemon=True)
+
+def discordChangerFunction():
+    while True:
+        text = getRandomString("discord")
+        final = CONFIG["template"].replace("$text", text)
+        response = Changer.discord(final, TOKENS["discord"])
+
+        if response == "success":
+            Set.data("discord", text)
+        elif response == "notvalidtoken":
+            Set.tokenError("discord")
+        elif response == "noconnection":
+            Set.error("discord", "Couldn't change bio on discord. No internet connection.")
+        elif response == "unknownerror":
+            Set.error("discord", "Couldn't change bio on discord. Unknown error.")
+        Set.time("discord", CONFIG["updatingInMinutes"])
+        time.sleep(CONFIG["updatingInMinutes"] * 60)
+discordChangerThread = threading.Thread(target=discordChangerFunction, daemon=True)
+if "discord" in TOKENS.keys():
     discordChangerThread.start()
 
 
+def githubChangerFunction():
+    while True:
+        text = getRandomString("github")
+        final = CONFIG["template"].replace("$text", text)
+        response = Changer.github(final, TOKENS["github"])
+
+        if response == "success":
+            Set.data("github", text)
+        elif response == "notvalidtoken":
+            Set.tokenError("github")
+        elif response == "noconnection":
+            Set.error("github", "Couldn't change bio on github. No internet connection.")
+        elif response == "toolong":
+            Set.error("github", "Couldn't change bio on github. Bio is too long.")
+        elif response == "cannotchange":
+            Set.error("github", "Couldn't change bio on github. Error occured!")
+        elif response == "unknownerror":
+            Set.error("github", "Couldn't change bio on github. Unknown error.")
+        Set.time("github", CONFIG["updatingInMinutes"])
+        time.sleep(CONFIG["updatingInMinutes"] * 60)
+
+githubChangerThread = threading.Thread(target=githubChangerFunction, daemon=True)
 if "github" in TOKENS.keys():
-    def githubChangerFunction():
-        while True:
-            text = getRandomString("github")
-            final = CONFIG["template"].replace("$text", text)
-            response = Changer.github(final, TOKENS["github"])
-
-            if response == "success":
-                Set.data("github", text)
-            elif response == "notvalidtoken":
-                Set.tokenError("github")
-            elif response == "noconnection":
-                Set.error("github", "Couldn't change bio on github. No internet connection.")
-            elif response == "toolong":
-                Set.error("github", "Couldn't change bio on github. Bio is too long.")
-            elif response == "cannotchange":
-                Set.error("github", "Couldn't change bio on github. Error occured!")
-            elif response == "unknownerror":
-                Set.error("github", "Couldn't change bio on github. Unknown error.")
-            Set.time("github", CONFIG["updatingInMinutes"])
-            time.sleep(CONFIG["updatingInMinutes"] * 60)
-
-    githubChangerThread = threading.Thread(target=githubChangerFunction, daemon=True)
     githubChangerThread.start()
 
 

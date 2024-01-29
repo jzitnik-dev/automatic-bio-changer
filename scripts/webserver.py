@@ -8,8 +8,6 @@ import threading
 import os
 import random
 
-
-
 PORTFILE = "port.json"
 
 def is_port_in_use(port: int) -> bool:
