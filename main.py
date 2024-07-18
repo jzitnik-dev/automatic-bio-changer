@@ -101,9 +101,15 @@ class Set:
     @staticmethod
     def addToLog(text):
         try:
-            with open("data/realtime/log.txt","a") as f:
+            with open("data/realtime/log.txt", "r+") as f:
+                lines = f.readlines()
+                if len(lines) >= 1000:
+                    lines = lines[-(999):]
                 time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-                f.write(f"{time} {text}\n")
+                lines.append(f"{time} {text}\n")
+                f.seek(0)
+                f.writelines(lines)
+                f.truncate()
         except:
             print("Error while saving the log. Literally it is saved to a TEXT FILE! IDK your system is probably messed up...")
     @staticmethod
