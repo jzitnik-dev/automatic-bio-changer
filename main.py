@@ -9,6 +9,7 @@ from scripts.changer import Changer
 from scripts.webserver import startWebServer
 
 class Generator:
+    @staticmethod
     def generateConfigjson():
         sampleconfig = {
             "template": "Random quote: $text\n\nMade using automatic bio changer by JZITNIK.",
@@ -17,6 +18,7 @@ class Generator:
         json.dump(sampleconfig, open("data/config/config.json", "w"))
         return sampleconfig
 
+    @staticmethod
     def generateStringsjson():
         samplestrings = [
             "Something > Nothing",
@@ -98,9 +100,12 @@ startWebServer()
 class Set:
     @staticmethod
     def addToLog(text):
-        with open("data/realtime/log.txt","a") as f:
-            time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
-            f.write(f"{time} {text}\n")
+        try:
+            with open("data/realtime/log.txt","a") as f:
+                time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+                f.write(f"{time} {text}\n")
+        except:
+            print("Error while saving the log. Literally it is saved to a TEXT FILE! IDK your system is probably messed up...")
     @staticmethod
     def data(typestr, text):
         time = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
@@ -125,6 +130,7 @@ class Set:
         new_datetime = current_datetime + delta
         currentData[typestr] = new_datetime.strftime("%d.%m.%Y %H:%M:%S")
         json.dump(currentData, open("data/realtime/time.json","w"))
+
 # Changer
 def getRandomString(app, i=0):
     LEN = {"discord": 190, "github" : 160}
@@ -144,20 +150,24 @@ def getRandomString(app, i=0):
 
 def discordChangerFunction():
     while True:
-        text = getRandomString("discord")
-        final = CONFIG["template"].replace("$text", text)
-        response = Changer.discord(final, TOKENS["discord"])
+        try:
+            text = getRandomString("discord")
+            final = CONFIG["template"].replace("$text", text)
+            response = Changer.discord(final, TOKENS["discord"])
 
-        if response == "success":
-            Set.data("discord", text)
-        elif response == "notvalidtoken":
-            Set.tokenError("discord")
-        elif response == "noconnection":
-            Set.error("discord", "Couldn't change bio on discord. No internet connection.")
-        elif response == "unknownerror":
-            Set.error("discord", "Couldn't change bio on discord. Unknown error.")
-        Set.time("discord", CONFIG["updatingInMinutes"])
-        time.sleep(CONFIG["updatingInMinutes"] * 60)
+            if response == "success":
+                Set.data("discord", text)
+            elif response == "notvalidtoken":
+                Set.tokenError("discord")
+            elif response == "noconnection":
+                Set.error("discord", "Couldn't change bio on discord. No internet connection.")
+            elif response == "unknownerror":
+                Set.error("discord", "Couldn't change bio on discord. Unknown error.")
+            Set.time("discord", CONFIG["updatingInMinutes"])
+            time.sleep(CONFIG["updatingInMinutes"] * 60)
+        except:
+            Set.error("discord", "Internal error while changing bio on discord.")
+
 discordChangerThread = threading.Thread(target=discordChangerFunction, daemon=True)
 if "discord" in TOKENS.keys():
     discordChangerThread.start()
@@ -165,24 +175,27 @@ if "discord" in TOKENS.keys():
 
 def githubChangerFunction():
     while True:
-        text = getRandomString("github")
-        final = CONFIG["template"].replace("$text", text)
-        response = Changer.github(final, TOKENS["github"])
+        try:
+            text = getRandomString("github")
+            final = CONFIG["template"].replace("$text", text)
+            response = Changer.github(final, TOKENS["github"])
 
-        if response == "success":
-            Set.data("github", text)
-        elif response == "notvalidtoken":
-            Set.tokenError("github")
-        elif response == "noconnection":
-            Set.error("github", "Couldn't change bio on github. No internet connection.")
-        elif response == "toolong":
-            Set.error("github", "Couldn't change bio on github. Bio is too long.")
-        elif response == "cannotchange":
-            Set.error("github", "Couldn't change bio on github. Error occured!")
-        elif response == "unknownerror":
-            Set.error("github", "Couldn't change bio on github. Unknown error.")
-        Set.time("github", CONFIG["updatingInMinutes"])
-        time.sleep(CONFIG["updatingInMinutes"] * 60)
+            if response == "success":
+                Set.data("github", text)
+            elif response == "notvalidtoken":
+                Set.tokenError("github")
+            elif response == "noconnection":
+                Set.error("github", "Couldn't change bio on github. No internet connection.")
+            elif response == "toolong":
+                Set.error("github", "Couldn't change bio on github. Bio is too long.")
+            elif response == "cannotchange":
+                Set.error("github", "Couldn't change bio on github. Error occured!")
+            elif response == "unknownerror":
+                Set.error("github", "Couldn't change bio on github. Unknown error.")
+            Set.time("github", CONFIG["updatingInMinutes"])
+            time.sleep(CONFIG["updatingInMinutes"] * 60)
+        except:
+            Set.error("github", "Internal error while changing bio on github.")
 
 githubChangerThread = threading.Thread(target=githubChangerFunction, daemon=True)
 if "github" in TOKENS.keys():
@@ -192,28 +205,37 @@ if "github" in TOKENS.keys():
 # Status checker
 def statusCheckerFunction():
     while True:
-        status = {}
-        if "discord" in TOKENS.keys(): status["discord"] = discordChangerThread.is_alive()
-        if "github" in TOKENS.keys(): status["github"] = githubChangerThread.is_alive()
-        json.dump(status, open("data/realtime/status.json","w"))
-        time.sleep(5)
+        try:
+            status = {}
+            if "discord" in TOKENS.keys(): status["discord"] = discordChangerThread.is_alive()
+            if "github" in TOKENS.keys(): status["github"] = githubChangerThread.is_alive()
+            json.dump(status, open("data/realtime/status.json","w"))
+            time.sleep(5)
+        except:
+            Set.error("internal", "Exception in status checker. Status on website might not be accurate.")
 statusCheckerThred = threading.Thread(target=statusCheckerFunction, daemon=True)
 statusCheckerThred.start()
 
 
 def configUpdater():
     while True:
-        loadConfigJs()
-        loadStringsJs()
-        time.sleep(1)
+        try:
+            loadConfigJs()
+            loadStringsJs()
+            time.sleep(1)
+        except:
+            Set.error("internal", "Exception in config updater. Consider restarting automatic bio changer manually.")
 
 configUpdaterThread = threading.Thread(target=configUpdater, daemon=True)
 configUpdaterThread.start()
     
 
 while True:
-    time.sleep(1)
-    data = json.load(open("data/realtime/restart.json"))
-    if (data["restart"]):
-        json.dump({}, open("data/realtime/restart.json", "w"))
-        sys.exit()
+    try:
+        time.sleep(5)
+        data = json.load(open("data/realtime/restart.json"))
+        if (data["restart"]):
+            json.dump({}, open("data/realtime/restart.json", "w"))
+            sys.exit()
+    except:
+        Set.error("internal", "Exception in stop checker. Stop functionality might not work properly.")
