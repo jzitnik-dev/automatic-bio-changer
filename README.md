@@ -26,7 +26,7 @@ You can install this program to you own server.
 ### 1. Clone this repository
 
 ```
-git clone https://github.com/JZITNIK-github/automatic-bio-changer
+git clone https://github.com/jzitnik-dev/automatic-bio-changer
 ```
 
 ### 2. Go to folder

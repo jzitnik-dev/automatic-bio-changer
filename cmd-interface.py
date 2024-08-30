@@ -59,7 +59,7 @@ while True:
                     shutil.rmtree(f)
 
             os.mkdir("temp")
-            os.system("git clone https://github.com/JZITNIK-github/automatic-bio-changer.git temp")
+            os.system("git clone https://github.com/jzitnik-dev/automatic-bio-changer.git temp")
 
             filesTemp = os.listdir("temp")
 
